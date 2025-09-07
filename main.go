@@ -15,9 +15,9 @@ import (
 )
 
 type apiConfig struct {
-	db      *database.Queries
+	db             *database.Queries
 	fileServerHits atomic.Int32
-	Platform string
+	Platform       string
 }
 
 func main() {
@@ -47,7 +47,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	cfg := apiConfig{
-		db: dbQueries,
+		db:       dbQueries,
 		Platform: platform,
 	}
 
@@ -63,6 +63,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", cfg.GetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.GetChirp)
 	mux.HandleFunc("POST /api/users", cfg.createUserHandler)
+	mux.HandleFunc("POST /api/login", cfg.loginHandler)
 
 	server := &http.Server{
 		Addr:    ":" + port,

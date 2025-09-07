@@ -2,9 +2,8 @@ package main
 
 import "net/http"
 
-
 func (cfg *apiConfig) resetUserHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	if cfg.Platform != "dev" {
 		jsonError(w, http.StatusForbidden, "Reset is only allowed in dev environment.", nil)
 		return

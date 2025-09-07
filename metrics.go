@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -13,7 +12,6 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	})
 }
 
-
 func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -24,7 +22,7 @@ func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, r *http.Request) {
     <p>Chirpy has been visited %d times!</p>
   </body>
 </html>`, cfg.fileServerHits.Load())
-w.Write([]byte(html))
+	w.Write([]byte(html))
 }
 
 func (cfg *apiConfig) resetMetricsHandler(w http.ResponseWriter, r *http.Request) {
