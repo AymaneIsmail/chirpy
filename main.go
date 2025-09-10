@@ -18,6 +18,8 @@ type apiConfig struct {
 	db             *database.Queries
 	fileServerHits atomic.Int32
 	Platform       string
+	JWTSecret string
+	PolkaKey string
 }
 
 func main() {
@@ -31,6 +33,16 @@ func main() {
 	platform := os.Getenv("PLATFORM")
 	if platform == "" {
 		log.Fatal("PLATFORM is not set")
+	}
+
+	JWTSecret := os.Getenv("JWT_SECRET")
+	if JWTSecret == "" {
+		log.Fatal("JWT_SECRET is not set")
+	}
+
+	polkaKey := os.Getenv("POLKA_KEY")
+	if JWTSecret == "" {
+		log.Fatal("POLKA_KEY is not set")
 	}
 
 	db, err := sql.Open("postgres", dbURL)
@@ -49,6 +61,8 @@ func main() {
 	cfg := apiConfig{
 		db:       dbQueries,
 		Platform: platform,
+		JWTSecret: JWTSecret,
+		PolkaKey: polkaKey,
 	}
 
 	// File server with metrics middleware
@@ -62,8 +76,14 @@ func main() {
 	mux.HandleFunc("POST /api/chirps", cfg.createChirpHandler)
 	mux.HandleFunc("GET /api/chirps", cfg.GetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.GetChirp)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.deleteChirpHandler)
 	mux.HandleFunc("POST /api/users", cfg.createUserHandler)
 	mux.HandleFunc("POST /api/login", cfg.loginHandler)
+	mux.HandleFunc("POST /api/refresh", cfg.refreshTokenHandler)
+	mux.HandleFunc("POST /api/revoke", cfg.revokeRefreshTokenHandler)
+	mux.HandleFunc("PUT  /api/users", cfg.updateUserHandler)
+	mux.HandleFunc("POST /api/polka/webhooks", cfg.webhooks)
+
 
 	server := &http.Server{
 		Addr:    ":" + port,

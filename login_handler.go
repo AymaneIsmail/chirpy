@@ -3,15 +3,17 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time" 
+	"database/sql"
 
 	"github.com/AymaneIsmail/chirpy/internal/auth"
+	"github.com/AymaneIsmail/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
-
 	type LoginDTO struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email           string `json:"email"`
+		Password        string `json:"password"`
 	}
 
 	type response struct {
@@ -31,9 +33,31 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = auth.CheckHashedPassword(user.HashedPassword, loginDTO.Password)
-	if err != nil {
+	if err := auth.CheckHashedPassword(user.HashedPassword, loginDTO.Password); err != nil {
 		jsonError(w, http.StatusUnauthorized, "Incorrect email or password", err)
+		return
+	}
+
+	tokenStr, err := auth.MakeJWT(user.ID, cfg.JWTSecret, time.Hour)
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "Couldn't generate JWT", err)
+		return
+	}
+
+	refreshToken,_ := auth.MakeRefreshToken()
+
+	createRefreshToken:= database.CreateRefreshTokenParams{
+		Token: refreshToken,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		UserID: user.ID,
+		ExpiresAt: time.Now().Add(60 * 24 * time.Hour),	
+		RevokedAt: sql.NullTime{}, // NULL (Valid=false)
+	}
+
+	_, err = cfg.db.CreateRefreshToken(r.Context(), createRefreshToken)
+	if err != nil {
+		jsonError(w, http.StatusInternalServerError, "Couldn't insert RefreshToken", err)
 		return
 	}
 
@@ -43,7 +67,9 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
 			Email:     user.Email,
+			Token:     tokenStr, 
+			RefreshToken: refreshToken,
+			IsChirpyRed: user.IsChirpyRed,
 		},
 	})
-	return
 }
