@@ -1,15 +1,17 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
-	"database/sql"
+	"sort"
 
-	"github.com/AymaneIsmail/chirpy/internal/database"
+
 	"github.com/AymaneIsmail/chirpy/internal/auth"
+	"github.com/AymaneIsmail/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -77,15 +79,48 @@ func (cfg *apiConfig) createChirpHandler(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-
 func (cfg *apiConfig) GetChirps(w http.ResponseWriter, r *http.Request) {
-	dbChirps, err := cfg.db.GetChirps(r.Context())
-	if err != nil {
-		jsonError(w, http.StatusInternalServerError, "Cannot get the chirps", err)
-		return
+	authorID := r.URL.Query().Get("author_id")
+	sortMethod := r.URL.Query().Get("sort")
+
+	var (
+		dbChirps []database.Chirp
+		err      error
+	)
+
+	if authorID != "" {
+		uid, parseErr := uuid.Parse(authorID)
+		if parseErr != nil {
+			jsonError(w, http.StatusBadRequest, "invalid author_id (must be UUID)", parseErr)
+			return
+		}
+
+		dbChirps, err = cfg.db.GetChirpsByUserId(r.Context(), uid)
+		if err != nil {
+			jsonError(w, http.StatusInternalServerError, "Cannot get chirps by author", err)
+			return
+		}
+	} else {
+		dbChirps, err = cfg.db.GetChirps(r.Context())
+		if err != nil {
+			jsonError(w, http.StatusInternalServerError, "Cannot get chirps", err)
+			return
+		}
 	}
 
-	chirps := []Chirp{}
+	switch sortMethod {
+		case "desc":
+			sort.Slice(dbChirps, func(i, j int) bool {
+				return dbChirps[i].CreatedAt.After(dbChirps[j].CreatedAt)
+			})
+		default: // par défaut asc
+			sort.Slice(dbChirps, func(i, j int) bool {
+				return dbChirps[i].CreatedAt.Before(dbChirps[j].CreatedAt)
+			})
+	}
+
+
+	chirps := make([]Chirp, 0, len(dbChirps))
 	for _, dbChirp := range dbChirps {
 		chirps = append(chirps, Chirp{
 			ID:          dbChirp.ID,
@@ -95,6 +130,7 @@ func (cfg *apiConfig) GetChirps(w http.ResponseWriter, r *http.Request) {
 			CleanedBody: dbChirp.Body,
 		})
 	}
+
 	jsonResponse(w, http.StatusOK, chirps)
 }
 

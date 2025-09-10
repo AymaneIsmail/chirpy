@@ -21,7 +21,6 @@ type User struct {
 	IsChirpyRed  bool      `json:"is_chirpy_red"`
 }
 
-
 func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email    string `json:"email"`
@@ -56,13 +55,18 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	IsChirpyRed := false
+	if user.IsChirpyRed.Valid {
+		IsChirpyRed = user.IsChirpyRed.Bool
+	}
+
 	jsonResponse(w, http.StatusCreated, response{
 		User: User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
-        IsChirpyRed: user.IsChirpyRed,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
+			Email:       user.Email,
+			IsChirpyRed: IsChirpyRed,
 		},
 	})
 }
@@ -115,13 +119,18 @@ func (cfg *apiConfig) updateUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	IsChirpyRed := false
+	if user.IsChirpyRed.Valid {
+		IsChirpyRed = user.IsChirpyRed.Bool
+	}
+
 	jsonResponse(w, http.StatusOK, response{
 		User: User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
-        IsChirpyRed: user.IsChirpyRed,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
+			Email:       user.Email,
+			IsChirpyRed: IsChirpyRed,
 		},
 	})
 }

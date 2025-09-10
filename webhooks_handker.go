@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"fmt"
+	"net/http"
 
 	"github.com/AymaneIsmail/chirpy/internal/auth"
 	"github.com/google/uuid"
@@ -48,7 +48,6 @@ func (cfg *apiConfig) webhooks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	fmt.Printf("UserID: %s", ev.Data.UserID)
 
 	if _, err := cfg.db.UpgradeToChirpyRed(r.Context(), ev.Data.UserID); err != nil {

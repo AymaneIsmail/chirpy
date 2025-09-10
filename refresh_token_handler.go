@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/AymaneIsmail/chirpy/internal/auth"
 	"net/http"
 	"time"
-	"github.com/AymaneIsmail/chirpy/internal/auth"
-
 )
 
 type RefreshTokenResponse struct {
@@ -50,7 +49,6 @@ func (cfg *apiConfig) refreshTokenHandler(w http.ResponseWriter, r *http.Request
 
 	jsonResponse(w, http.StatusOK, RefreshTokenResponse{Token: tokenStr})
 }
-
 
 func (cfg *apiConfig) revokeRefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	bearerToken, err := auth.GetBearerToken(r.Header)

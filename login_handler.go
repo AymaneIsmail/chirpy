@@ -1,10 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
-	"time" 
-	"database/sql"
+	"time"
 
 	"github.com/AymaneIsmail/chirpy/internal/auth"
 	"github.com/AymaneIsmail/chirpy/internal/database"
@@ -12,8 +12,8 @@ import (
 
 func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 	type LoginDTO struct {
-		Email           string `json:"email"`
-		Password        string `json:"password"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	type response struct {
@@ -44,14 +44,14 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshToken,_ := auth.MakeRefreshToken()
+	refreshToken, _ := auth.MakeRefreshToken()
 
-	createRefreshToken:= database.CreateRefreshTokenParams{
-		Token: refreshToken,
+	createRefreshToken := database.CreateRefreshTokenParams{
+		Token:     refreshToken,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		UserID: user.ID,
-		ExpiresAt: time.Now().Add(60 * 24 * time.Hour),	
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(60 * 24 * time.Hour),
 		RevokedAt: sql.NullTime{}, // NULL (Valid=false)
 	}
 
@@ -61,15 +61,20 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	IsChirpyRed := false
+	if user.IsChirpyRed.Valid {
+		IsChirpyRed = user.IsChirpyRed.Bool
+	}
+
 	jsonResponse(w, http.StatusOK, response{
 		User: User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
-			Token:     tokenStr, 
+			ID:           user.ID,
+			CreatedAt:    user.CreatedAt,
+			UpdatedAt:    user.UpdatedAt,
+			Email:        user.Email,
+			Token:        tokenStr,
 			RefreshToken: refreshToken,
-			IsChirpyRed: user.IsChirpyRed,
+			IsChirpyRed:  IsChirpyRed,
 		},
 	})
 }
